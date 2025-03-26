@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import com.taskapp.exception.AppException;
 import com.taskapp.logic.TaskLogic;
 import com.taskapp.logic.UserLogic;
 import com.taskapp.model.User;
@@ -25,6 +26,7 @@ public class TaskUI {
 
     /**
      * 自動採点用に必要なコンストラクタのため、皆さんはこのコンストラクタを利用・削除はしないでください
+     * 
      * @param reader
      * @param userLogic
      * @param taskLogic
@@ -45,6 +47,16 @@ public class TaskUI {
      */
     public void displayMenu() {
         System.out.println("タスク管理アプリケーションにようこそ!!");
+        User user = null;
+        while (user == null) {
+            try {
+                user = inputLogin();
+            } catch (AppException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+
+        System.out.println("ユーザー名: " + user.getName() + "でログインしました。\n");
 
         // メインメニュー
         boolean flg = true;
@@ -59,7 +71,8 @@ public class TaskUI {
 
                 switch (selectMenu) {
                     case "1":
-                        break;
+                        TaskLogic logic = new TaskLogic();
+                        logic.showAll(user);
                     case "2":
                         break;
                     case "3":
@@ -82,8 +95,23 @@ public class TaskUI {
      *
      * @see com.taskapp.logic.UserLogic#login(String, String)
      */
-    // public void inputLogin() {
-    // }
+    public User inputLogin() throws AppException {
+        try {
+            System.out.print("メールアドレスを入力してください: ");
+            String email = reader.readLine();
+
+            System.out.print("パスワードを入力してください: ");
+            String password = reader.readLine();
+
+            UserLogic logic = new UserLogic();
+            return logic.login(email, password);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new AppException("入力エラーが発生しました。");
+        }
+
+    }
 
     /**
      * ユーザーからの新規タスク情報を受け取り、新規タスクを登録します。
@@ -129,6 +157,6 @@ public class TaskUI {
      * @return 数値であればtrue、そうでなければfalse
      */
     // public boolean isNumeric(String inputText) {
-    //     return false;
+    // return false;
     // }
 }

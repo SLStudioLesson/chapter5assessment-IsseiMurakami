@@ -1,10 +1,13 @@
 package com.taskapp.logic;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.taskapp.dataaccess.LogDataAccess;
 import com.taskapp.dataaccess.TaskDataAccess;
 import com.taskapp.dataaccess.UserDataAccess;
+import com.taskapp.exception.AppException;
+import com.taskapp.model.Log;
 import com.taskapp.model.Task;
 import com.taskapp.model.User;
 
@@ -74,9 +77,19 @@ public class TaskLogic {
      * @param loginUser   ログインユーザー
      * @throws AppException ユーザーコードが存在しない場合にスローされます
      */
-    // public void save(int code, String name, int repUserCode,
-    // User loginUser) throws AppException {
-    // }
+    public void save(int code, String name, int repUserCode,
+            User loginUser) throws AppException {
+        UserDataAccess uda = new UserDataAccess();
+        User assignedUser = uda.findByCode(repUserCode);
+
+        Task task = new Task(code, name, 0, assignedUser);
+        TaskDataAccess tda = new TaskDataAccess();
+        tda.save(task);
+
+        Log log = new Log(code, loginUser.getCode(), 0, LocalDate.now());
+        LogDataAccess lda = new LogDataAccess();
+        lda.save(log);
+    }
 
     /**
      * タスクのステータスを変更します。
@@ -89,9 +102,25 @@ public class TaskLogic {
      * @param loginUser ログインユーザー
      * @throws AppException タスクコードが存在しない、またはステータスが前のステータスより1つ先でない場合にスローされます
      */
-    // public void changeStatus(int code, int status,
-    // User loginUser) throws AppException {
-    // }
+    public void changeStatus(int code, int status,
+            User loginUser) throws AppException {
+        TaskDataAccess tda = new TaskDataAccess();
+        Task task = tda.findByCode(code);
+
+        int currentStatus = task.getStatus();
+
+        if (status != currentStatus + 1) {
+            throw new AppException("ステータスは、前のステータスより1つ先のもののみを選択してください");
+        }
+
+        task.setStatus(status);
+        tda.update(task);
+
+        LogDataAccess lda = new LogDataAccess();
+        LocalDate date = LocalDate.now();
+        Log log = new Log(code, loginUser.getCode(), status, date);
+        lda.save(log);
+    }
 
     /**
      * タスクを削除します。
